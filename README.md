@@ -25,5 +25,5 @@ Here is a screenshot of this application:
 4. 启动Celery worker: `venv/bin/celery worker -A app.celery --loglevel=info`.
 5. 启动app: `venv/bin/python app.py`.
 6. 浏览器访问 `http://localhost:5000/` 
-
-
+7. 演示：
+   <center><img src="https://github.com/cncert/ansible-flask-websocket-celery-demo/blob/master/templates/1556374302219.gif"></center>
