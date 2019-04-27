@@ -1,0 +1,121 @@
+<html>
+  <head>
+    <title>Ansible + Flask SocketIO + Celery Demo</title>
+    <style>
+        .progress {
+            width: 100%;
+            text-align: center;
+        }
+    </style>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/nanobar/0.2.1/nanobar.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/socket.io/2.2.0/socket.io.js"></script>
+
+  </head>
+  <body>
+    <h1>Ansible + Flask SocketIO + Celery Demo</h1>
+    SocketIO Status:<div id="status"></div>
+    <h2>示例 1: Long running task with progress updates</h2>
+    <button id="start-bg-job">Start Long Ansible Task</button><br><br>
+
+    <div id="progress"></div>
+
+    <script>
+        $(document).ready(function(){
+            var gIdCounter = 0;
+            var userId;
+            var nanobars = {};
+            function generateID(baseStr) {
+                return(baseStr + gIdCounter++);
+            }
+            function start_long_task() {
+                // 定义开始后台任务
+                // add task status elements
+                progressid = generateID('progress')
+                div = $('<div id="' + progressid + '" class="progress"><div></div><div>0%</div><div>...</div><div>&nbsp;</div></div><hr>');
+                $('#progress').append(div);
+
+                // create a progress bar
+                var nanobar = new Nanobar({
+                    bg: '#44f',
+                    target: div[0].childNodes[0]
+                });
+                nanobars[progressid] = nanobar;
+                // send ajax POST request to start background job
+                // 给后台发送一个ajax请求，开始后台任务，将前端的progressid、userId发送给后台
+                console.log(userId+"  发送ajax请求")
+                $.ajax({
+                    type: 'POST',
+                    url: '/longtask',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    data: JSON.stringify({"elementid": progressid, "userid": userId}),
+                    success: function(data, status, request) {
+                    },
+                    error: function() {
+                        alert('Unexpected error');
+                    }
+                });
+            }
+            function update_progress(data) {
+                // 更新状态信息、进度条
+                console.log(" update_progress")
+                console.log(data)
+                percent = parseInt(data['current'] * 100 / data['total']);
+                nanobars[data.elementid].go(percent);
+                var ele = $('#'+data.elementid);
+                $(ele[0].childNodes[1]).text(percent + '%');
+                $(ele[0].childNodes[2]).text(data['status']);
+
+                if ('result' in data) {
+                    // show result
+                     $(ele[0].childNodes[3]).text('Result: ' + data['result']);
+                }
+            }
+            $(function() {
+                // 开始后台任务
+                $('#start-bg-job').click(start_long_task);
+            });
+
+            // Setup socketio functions
+            // 指定一个全局命名空间,要与后台的namespace名称相同
+            var namespace = '/events'; // change to an empty string to use the global namespace
+
+            // the socket.io documentation recommends sending an explicit package upon connection
+            // this is specially important when using the global namespace
+            // 与后台建立websocket连接，非常重要的第一步
+            // 例子：var socket = io.connect('http://http://127.0.0.1:5000/events');
+            var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
+
+            // 接收名字为"connect"事件的数据，然后给后台的名字为"status"的事件发送提示信息
+            socket.on('connect', function() {
+                socket.emit('status', {status: 'I\'m connected!'});
+            });
+
+            // event handler for userid.  On initial connection, the server
+            // sends back a unique userid
+            socket.on('userid', function(msg) {
+                // 接收名字为"userid"事件的数据
+                userId = msg.userid;
+                console.log(userId+"  接收后台生成的userId")
+            });
+
+            // event handler for server sent celery status
+            // the data is displayed in the "Received" section of the page
+            // 接收服务器端celerystatus事件发送的celery状态
+            socket.on('celerystatus', function(msg) {
+                update_progress(msg);
+            });
+            
+            // event handler for server sent general status
+            // the data is displayed in the "Received" section of the page
+            // 接收服务器端status事件发送的基本状态
+            socket.on('status', function(msg) {
+                $('#status').text(msg.status);
+            });
+
+        });
+    </script>
+
+  </body>
+</html>
