@@ -14,7 +14,7 @@ manager = Manager(app)
 
 manager.add_command('db', MigrateCommand)
 manager.add_command('run', socketio.run(
-    app=app, host='0.0.0.0', port=5000))  # 新加入的内容，重写manager的run命令
+    app=app, host='0.0.0.0', port=5000,debug=True))  # 新加入的内容，重写manager的run命令
 
 
 if __name__ == '__main__':

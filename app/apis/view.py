@@ -13,13 +13,11 @@ from flask_socketio import (
 from app import redis, socketio, api
 from tasks.task import long_task
 
-# app = current_app._get_current_object()
-
 
 class AnsibleTaskView(Resource):
     def __init__(self):
         self.reqparse = reqparse.RequestParser()
-        self.reqparse.add_argument('isp', type=str, location=[
+        self.reqparse.add_argument('elementid', type=str, location=[
                                    'json', 'args', 'headers'])
         self.args = self.reqparse.parse_args()
         super(AnsibleTaskView, self).__init__()
@@ -42,39 +40,27 @@ class AnsibleTaskView(Resource):
 
         task = long_task.delay(elementid, userid, iplist=iplist, url=api.url_for(
             EventView, _external=True), module_name=module_name, module_args=module_args)
-        return jsonify({}), 202
+        return {}, 202
 
-
-# @api_blueprint.route('/event/', methods=['POST'])
-# def event():
-#     # 接收long_task后台任务返回的数据，并发送到前端celerystatus事件（可以在这里进一步加工处理后台任务返回的数据，然后再发送到前端）
-#     userid = request.json['userid']
-#     data = request.json
-#     print(data)
-#     namespace = current_app.clients.get(userid)
-#     print(namespace, 'lllllllllllllllllllllllll')
-#     if namespace and data:
-#         # 要发送的data必须的是son
-#         emit('celerystatus', data, broadcast=True, namespace=namespace)
-#         return 'ok'
-#     return 'error', 404
 
 class EventView(Resource):
-    def get(self):
-        pass
-
     def post(self):
         # 接收long_task后台任务返回的数据，并发送到前端celerystatus事件（可以在这里进一步加工处理后台任务返回的数据，然后再发送到前端）
         userid = request.json['userid']
         data = request.json
         print(data)
         namespace = current_app.clients.get(userid)
-        print(namespace, 'lllllllllllllllllllllllll')
         if namespace and data:
-            # 要发送的data必须的是son
+            # 要发送的data必须的是json
             emit('celerystatus', data, broadcast=True, namespace=namespace)
             return 'ok'
         return 'error', 404
+
+class ClientView(Resource):
+    def get(self):
+        print("clients")
+        return jsonify({'clients': current_app.clients.keys()})
+
 
 
 # 前端websocket连接过来后，执行的第二个函数
@@ -97,6 +83,9 @@ def disconnect_request():
 @socketio.on('connect', namespace='/events')
 def events_connect():
     print("前端websocket连接过来后，执行的第一个函数")
+    urls = api.url_for(
+            EventView, _external=True)
+    print(urls)
     userid = str(uuid.uuid4())
     print(userid, "生成新的userid")
     session['userid'] = userid

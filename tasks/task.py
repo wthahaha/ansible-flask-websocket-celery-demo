@@ -6,14 +6,8 @@ import requests
 import json
 from flask import current_app
 from multiprocessing import current_process
-from app.utils import make_celery
 from app.ansibles.ansible_task import AnsibleTask
-from app import app_create
-
-
-app = app_create(os.getenv('FLASK_CONFIG') or 'default')
-
-celery = make_celery(app)
+from app import celery
 
 
 @celery.task(bind=True, soft_time_limit=10)

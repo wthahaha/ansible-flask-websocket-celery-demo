@@ -46,7 +46,7 @@
                 console.log(userId+"  发送ajax请求")
                 $.ajax({
                     type: 'POST',
-                    url: '/longtask',
+                    url: '/api/ansible_task',
                     contentType: "application/json; charset=utf-8",
                     dataType: "json",
                     data: JSON.stringify({"elementid": progressid, "userid": userId}),
