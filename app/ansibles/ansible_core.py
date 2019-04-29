@@ -72,6 +72,11 @@ class Runner(object):
         self.variable_manager = VariableManager(
             loader=self.loader, inventory=self.inventory)
 
+    def get_all_hosts(self):
+        inventory = InventoryManager(
+            loader=self.loader, sources=self.resource)
+        return inventory.get_hosts()
+
     def run(self):
         """
         运行ansible任务.

@@ -27,4 +27,4 @@ def long_task(self, elementid, userid, iplist, url, module_name=None, module_arg
         meta = {'current': index, 'host': host, 'total': total,
                 'status': result, 'elementid': elementid, 'userid': userid}
         requests.post(url, json=meta)
-        time.sleep(1)
+        # time.sleep(1)

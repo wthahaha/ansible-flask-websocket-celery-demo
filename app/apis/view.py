@@ -10,6 +10,8 @@ from flask_socketio import (
     emit,
     disconnect
 )
+from app.ansibles.ansible_task import INVENTORY
+from app.ansibles.ansible_core import Runner
 from app import redis, socketio, api
 from tasks.task import long_task
 
@@ -60,6 +62,16 @@ class ClientView(Resource):
     def get(self):
         print("clients")
         return jsonify({'clients': current_app.clients.keys()})
+
+import json
+class ClientIpListView(Resource):
+    def get(self):
+        INVENTORY = "/root/flask-celery-websocket-demo/app/ansibles/ansible.host"
+        runner = Runner(resource=INVENTORY, ip_list="all", ansible_vault_key='devops')
+        print(INVENTORY, "IN")
+        res = runner.get_all_hosts()
+        print(res,type(res))
+        return jsonify({"res":str(res)})
 
 
 

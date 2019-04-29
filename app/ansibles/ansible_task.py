@@ -4,7 +4,7 @@ import os
 import logging
 import ast
 import json
-from ansibles.ansible_core import Runner, ResultsCollector
+from app.ansibles.ansible_core import Runner, ResultsCollector
 
 
 
@@ -21,9 +21,6 @@ class AnsibleTask(object):
         self.module_args = module_args
 
     def run_translate_task(self):
-        ansible_ssh_user = ''
-        ansible_python_interpreter = '/usr/bin/python'
-        ansible_ssh_private = '/root/.ssh/id_rsa'
         hosts = INVENTORY
         all_hosts = [hosts,]
         runner = Runner(resource=all_hosts, ip_list=self.iplist_or_ip,

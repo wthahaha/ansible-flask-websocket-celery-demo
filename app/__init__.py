@@ -35,7 +35,7 @@ def app_create(config_name):
     redis.init_app(app)
     
 
-    from app.apis.view import AnsibleTaskView, EventView, ClientView
+    from app.apis.view import AnsibleTaskView, EventView, ClientView,ClientIpListView
     from app.apis import api_blueprint
     from app.main import main_blueprint
 
@@ -48,6 +48,8 @@ def app_create(config_name):
                      endpoint="events",strict_slashes=False)
     api.add_resource(ClientView, "/api/client/",
                      endpoint="client",strict_slashes=False)
+    api.add_resource(ClientIpListView, "/api/iplist/",
+                     endpoint="iplist",strict_slashes=False)
 
     api.init_app(app)
     socketio.init_app(app)
