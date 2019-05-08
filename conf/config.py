@@ -12,6 +12,8 @@ class Config:
     CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
     CELERY_ACCEPT_CONTENT = ['pickle', 'json', 'msgpack', 'yaml']
 
+    INVENTORY = "/home/wt/ansible_hosts.host"
+
     @staticmethod
     def init_app(app):
         pass

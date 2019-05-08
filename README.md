@@ -22,7 +22,7 @@ Here is a screenshot of this application:
 1. Clone 本项目.
 2. 创建 virtualenv(python3.6.7) 并且安装 requirements.
 3. 安装并启动redis (如果是在 Linux or Mac上, 执行 `run-redis.sh` 来安装并启动redis).
-4. 启动Celery worker: `venv/bin/celery worker -A app.celery --loglevel=info`.
+4. 启动Celery worker: `celery worker -A celery_worker.celery --loglevel=info`.
 5. 启动app: `venv/bin/python app.py`.
 6. 浏览器访问 `http://localhost:5000/` 
 7. 演示：

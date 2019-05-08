@@ -15,7 +15,7 @@ from ansible.parsing.vault import VaultSecret
 class Runner(object):
     """
     This is a General object for parallel execute modules.
-    本接口依赖hosts文件，在调用本接口之前，需要先生成hosts文件，可以通过手动编辑或者动态生成的方式生成hosts文件。
+    本方法依赖hosts文件，在调用本方法之前，需要先生成hosts文件，可以通过手动编辑或者动态生成的方式生成hosts文件。
     如果在hosts文件里指定了ansible_ssh_private_key_file、ansible_python_interpreter、ansible_ssh_user等变量，
     调用本接口时就无需再传入这些变量了,即使传了这些变量也没用，因为hosts文件中变量的优先级最高
     使用密码或公钥指定一个即可，另一个设为None。比如：如果传入了公钥参数，则self.passwords就设为None
