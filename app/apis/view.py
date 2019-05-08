@@ -33,6 +33,7 @@ class AnsibleTaskView(Resource):
         print(userid, "接收前端发送到后台的userid------")
         # 启动long_task后台任务，并将其放到celery中执行
         iplist = ["192.168.204.131", "192.168.204.132", "192.168.204.133"]
+        iplist = ["218.241.108.243", "218.241.108.195"]
         module_name = "setup"
         module_args = ""
         # module_name = 'copy'
