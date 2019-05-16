@@ -12,7 +12,7 @@ from ansible.inventory.manager import InventoryManager
 logger = logging.getLogger(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 INVENTORY = os.path.join(BASE_DIR, 'ansible.host')
-EXTRA_INVENTORY = Config.INVENTORY
+EXTRA_INVENTORY = Config.INVENTORY_PATH
 print(EXTRA_INVENTORY)
 
 

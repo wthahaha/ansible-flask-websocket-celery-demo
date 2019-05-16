@@ -2,11 +2,12 @@
 192.168.204.131
 192.168.204.133
 192.168.204.135
+218.241.108.243
 
 
 [root:vars]
 ansible_ssh_user=root
 [all:vars]
-ansible_ssh_private_key_file=/root/.ssh/id_rsa
+ansible_ssh_private_key_file=/home/wt/.ssh/id_rsa
 ansible_python_interpreter=/usr/bin/python
 timeout=10

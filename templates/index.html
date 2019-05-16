@@ -49,7 +49,9 @@
                     url: '/api/ansible_task',
                     contentType: "application/json; charset=utf-8",
                     dataType: "json",
-                    data: JSON.stringify({"elementid": progressid, "userid": userId}),
+                    data: JSON.stringify({"elementid": progressid, "userid": userId,
+                     "asnible_module_name":"setup",
+                     "ansible_module_args":"gather_subset=hardware"}),
                     success: function(data, status, request) {
                     },
                     error: function() {

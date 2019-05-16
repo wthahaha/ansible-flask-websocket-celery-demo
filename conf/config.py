@@ -12,7 +12,7 @@ class Config:
     CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
     CELERY_ACCEPT_CONTENT = ['pickle', 'json', 'msgpack', 'yaml']
 
-    INVENTORY = "/home/wt/ansible_hosts.host"
+    INVENTORY_PATH = "/home/wt/project/ansible-flask-websocket-celery-demo/app/ansibles/ansible.host"
 
     @staticmethod
     def init_app(app):
