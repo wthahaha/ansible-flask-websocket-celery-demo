@@ -42,7 +42,6 @@ class AnsibleTaskView(Resource):
         print(userid, "接收前端发送到后台的userid------")
         # 启动long_task后台任务，并将其放到celery中执行
         # iplist = ["192.168.204.131", "192.168.204.132", "192.168.204.133"]
-        # iplist = ["218.241.108.243", ]
         INVENTORY = current_app.config["INVENTORY_PATH"]
         runner = Runner(resource=INVENTORY, ip_list="all",
                         ansible_vault_key='devops')
@@ -73,7 +72,7 @@ class EventView(Resource):
             new_update_data_dict = {}
             for host in ansible_hardware_data_success:
                 """
-                {"success": {"218.241.108.243": {"invocation": {"module_args": {"filter": "*", "gather_subset": ["hardware"],
+                {"success": {"192.168.204.132": {"invocation": {"module_args": {"filter": "*", "gather_subset": ["hardware"],
                  "fact_path": "/etc/ansible/facts.d", "gather_timeout": 10}}, 
                  "ansible_facts": {"ansible_product_serial": "6CU3240C5M", "ansible_form_factor": "Rack Mount Chassis"
                 """
