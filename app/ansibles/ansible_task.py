@@ -6,8 +6,8 @@ import ast
 import json
 from app.ansibles.ansible_core import Runner, ResultsCollector
 from conf.config import Config
-from app.ansible.parsing.dataloader import DataLoader
-from app.ansible.inventory.manager import InventoryManager
+from ansible.parsing.dataloader import DataLoader
+from ansible.inventory.manager import InventoryManager
 
 logger = logging.getLogger(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
