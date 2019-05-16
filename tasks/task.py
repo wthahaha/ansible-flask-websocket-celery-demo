@@ -11,7 +11,8 @@ from app import celery
 from celery.exceptions import SoftTimeLimitExceeded
 
 
-@celery.task(bind=True, soft_time_limit=10)
+# @celery.task(bind=True, soft_time_limit=10)
+@celery.task(bind=True, time_limit=10)
 def long_task(self, elementid, userid, iplist, url, module_name=None, module_args=None):
     """Background task that runs a long function with progress reports.
     后台任务"""
