@@ -8,7 +8,7 @@ from flask import current_app
 from multiprocessing import current_process
 from app.ansibles.ansible_task import AnsibleTask
 from app import celery
-from celery.exceptions import SoftTimeLimitExceeded
+from celery.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 
 
 # @celery.task(bind=True, soft_time_limit=10)
@@ -27,6 +27,9 @@ def long_task(self, elementid, userid, iplist, url, module_name=None, module_arg
             result = res.run_translate_task()
             result = json.dumps(result)
         except SoftTimeLimitExceeded:
+            host = str(host)
+            result = json.dumps({host: "task exceed time, cancel task!"})
+        except TimeLimitExceeded:
             host = str(host)
             result = json.dumps({host: "task exceed time, cancel task!"})
         except Exception as e:
