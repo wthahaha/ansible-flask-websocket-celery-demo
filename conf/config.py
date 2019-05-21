@@ -15,7 +15,7 @@ class Config:
     CELERY_ACCEPT_CONTENT = ['json', 'pickle', 'msgpack', 'yaml']
     CELERY_WORKER_CONCURRENCY = 10
 
-    INVENTORY_PATH = "/tmp/ansible.host"
+    INVENTORY_PATH = os.getenv("INVENTORY_PATH")
 
     @staticmethod
     def init_app(app):
