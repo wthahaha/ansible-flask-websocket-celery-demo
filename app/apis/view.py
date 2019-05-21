@@ -137,7 +137,7 @@ class EventView(Resource):
                 new_update_data_dict["ansible_all_ipv4_addresses"] = ansible_all_ipv4_addresses
                 new_update_data_dict["ansible_all_ipv6_addresses"] = ansible_all_ipv6_addresses
 
-                redis.set("info3:"+host, json.dumps(new_update_data_dict))
+                redis.set("info:"+host, json.dumps(new_update_data_dict))
         else:
             print(ansible_hardware_data, "超时")
 
