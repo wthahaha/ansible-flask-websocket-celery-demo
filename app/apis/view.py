@@ -18,7 +18,6 @@ from tasks.task import long_task
 from app import redis
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-device_file = os.path.join(BASE_DIR, 'device.json')
 
 
 class AnsibleTaskView(Resource):
