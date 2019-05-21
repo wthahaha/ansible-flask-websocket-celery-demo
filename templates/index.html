@@ -51,11 +51,11 @@
                     dataType: "json",
                     data: JSON.stringify({"elementid": progressid, "userid": userId,
                      "ansible_module_name":"setup",
-                     "ansible_module_args":"gather_subset=hardware"}),
+                     "ansible_module_args":""}),
                     success: function(data, status, request) {
                     },
                     error: function() {
-                        alert('Unexpected error');
+                        alert('发生异常');
                     }
                 });
             }
@@ -67,7 +67,7 @@
                 nanobars[data.elementid].go(percent);
                 var ele = $('#'+data.elementid);
                 $(ele[0].childNodes[1]).text(percent + '%');
-                $(ele[0].childNodes[2]).text(data['status']);
+                $(ele[0].childNodes[2]).text(JSON.stringify(data['status']));
 
                 if ('result' in data) {
                     // show result

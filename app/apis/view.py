@@ -15,6 +15,7 @@ from app.ansibles.ansible_task import INVENTORY
 from app.ansibles.ansible_core import Runner
 from app import redis, socketio, api
 from tasks.task import long_task
+from app import redis
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 device_file = os.path.join(BASE_DIR, 'device.json')
@@ -37,6 +38,7 @@ class AnsibleTaskView(Resource):
         elementid = request.json['elementid']
         userid = request.json['userid']
         # gather_subset="hardware" 只获取hardware的数据
+        print(request.json)
         ansible_module_name = request.json['ansible_module_name']
         ansible_module_args = request.json['ansible_module_args']
         print(userid, "接收前端发送到后台的userid------")
@@ -50,8 +52,11 @@ class AnsibleTaskView(Resource):
         module_args = ansible_module_args
         # module_name = 'copy'
         # module_args = "src=%s dest=%s" % ('/tmp/1.txt', '/tmp/')
+        str_ip_list = []
+        for ip in iplist:
+            str_ip_list.append(str(ip))
 
-        task = long_task.delay(elementid, userid, iplist=iplist, url=api.url_for(
+        task = long_task.delay(elementid, userid, iplist=str_ip_list, url=api.url_for(
             EventView, _external=True), module_name=module_name, module_args=module_args)
         return {}, 202
 
@@ -66,10 +71,8 @@ class EventView(Resource):
         ansible_hardware_data = json.loads(ansible_hardware_data)
         ansible_hardware_data_success = ansible_hardware_data.get(
             "success", None)
+        new_update_data_dict = {}
         if ansible_hardware_data_success:
-            print(ansible_hardware_data_success,
-                  type(ansible_hardware_data_success))
-            new_update_data_dict = {}
             for host in ansible_hardware_data_success:
                 """
                 {"success": {"192.168.204.132": {"invocation": {"module_args": {"filter": "*", "gather_subset": ["hardware"],
@@ -77,30 +80,74 @@ class EventView(Resource):
                  "ansible_facts": {"ansible_product_serial": "6CU3240C5M", "ansible_form_factor": "Rack Mount Chassis"
                 """
                 hardware_data = ansible_hardware_data_success[host]["ansible_facts"]
-                new_update_data_dict["serial_number"] = hardware_data["ansible_product_serial"]
+                device_size_total = 0
+                ansible_devices = hardware_data['ansible_devices']
+                # 获取磁盘总大小：G
+                # print succ
+                for device in ansible_devices:
+                    if device.startswith('sd'):
+                        if "GB" in ansible_devices[device]["size"]:
+                            device_size = float(
+                                ansible_devices[device]["size"].replace("GB", ""))
+
+                        elif "TB" in ansible_devices[device]["size"]:
+                            device_size = float(
+                                ansible_devices[device]["size"].replace("TB", ""))
+                        device_size_total += device_size
+                device_size_total = format(device_size_total, ".1f")
+                # 获取内存总大小：G
+                total_memory = int(hardware_data
+                                   ['ansible_memtotal_mb'])/1024
+
+                # 获取cpu个数
+                cpu_count = int(hardware_data
+                                ["ansible_processor_count"])
+
+                # 获取操作系统名称  centos  6.5-x86_64
+                os_name = hardware_data["ansible_distribution"]
+                os_version = hardware_data["ansible_distribution_version"]
+                os_bit = hardware_data["ansible_architecture"]
+                os_version_bit = os_version + "-" + os_bit
+
+                # 是否为虚拟机， VMware 或kvm是虚拟机，由于ansible无法区分刀片和架式机，故设备类型只更新虚拟机
+                virtualization_type = hardware_data["ansible_virtualization_type"]
+                # 设备品牌
+                ansible_system_vendor = hardware_data["ansible_system_vendor"]
+                # 设备型号
+                ansible_product_name = hardware_data["ansible_product_name"]
+                # 设备序列号
+                ansible_product_serial = hardware_data["ansible_product_serial"]
+                # 主机名
+                ansible_hostname = hardware_data["ansible_nodename"]
+                # 所有的ipv4地址
+                ansible_all_ipv4_addresses = hardware_data["ansible_all_ipv4_addresses"]
+                # 所有的ipv6地址
+                ansible_all_ipv6_addresses = hardware_data["ansible_all_ipv6_addresses"]
+
                 new_update_data_dict["ip"] = host
-                new_update_data_dict["system"] = hardware_data["ansible_lsb"]["description"]
-            with open(device_file, "w", encoding="utf-8") as fw:
-                fw.write("")
+                new_update_data_dict["device_size_total"] = device_size_total
+                new_update_data_dict["total_memory"] = total_memory
+                new_update_data_dict["cpu_count"] = cpu_count
+                new_update_data_dict["os_name"] = os_name
+                new_update_data_dict["os_version_bit"] = os_version_bit
+                new_update_data_dict["virtualization_type"] = virtualization_type
+                new_update_data_dict["ansible_system_vendor"] = ansible_system_vendor
+                new_update_data_dict["ansible_product_name"] = ansible_product_name
+                new_update_data_dict["ansible_product_serial"] = ansible_product_serial
+                new_update_data_dict["ansible_hostname"] = ansible_hostname
+                new_update_data_dict["ansible_all_ipv4_addresses"] = ansible_all_ipv4_addresses
+                new_update_data_dict["ansible_all_ipv6_addresses"] = ansible_all_ipv6_addresses
 
-            if os.path.getsize(device_file) == 0:
-                device_list = []
-            else:
-                with open(device_file, "r", encoding="utf-8") as fr:
-                    device_list = json.load(fr)
-            device_list.append(new_update_data_dict)
-
-            with open(device_file, "w", encoding="utf-8") as fw:
-                print(device_list)
-                device_list = json.dumps(device_list)
-                fw.write(device_list)
+                redis.set("info3:"+host, json.dumps(new_update_data_dict))
         else:
             print(ansible_hardware_data, "超时")
 
         namespace = current_app.clients.get(userid)
         if namespace and data:
+            data["status"] = new_update_data_dict
             # 要发送的data必须的是json
-            emit('celerystatus', data, broadcast=True, namespace=namespace)
+            emit('celerystatus', data,
+                 broadcast=True, namespace=namespace)
             return 'ok'
         return 'error', 404
 

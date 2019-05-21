@@ -12,12 +12,10 @@ from celery.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 
 
 @celery.task(bind=True, soft_time_limit=10)
-# @celery.task(bind=True, time_limit=20, soft_time_limit=10)
 def long_task(self, elementid, userid, iplist, url, module_name=None, module_args=None):
     """Background task that runs a long function with progress reports.
     后台任务"""
     total = len(iplist)
-    print(iplist)
     for index, host in enumerate(iplist, 1):
         try:
             host = str(host)
@@ -37,5 +35,6 @@ def long_task(self, elementid, userid, iplist, url, module_name=None, module_arg
             result = json.dumps({host: "some wrong ocured, cancel task!"})
         meta = {'current': index, 'host': host, 'total': total,
                 'status': result, 'elementid': elementid, 'userid': userid}
+        print(meta)
         requests.post(url, json=meta)
         # time.sleep(1)

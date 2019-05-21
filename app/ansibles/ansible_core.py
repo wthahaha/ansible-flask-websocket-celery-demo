@@ -140,11 +140,16 @@ class ResultsCollector(CallbackBase):
         self.host_unreachable = {}
         self.host_failed = {}
 
+    def save_json(self, data):
+        with open("123.txt", "a+", encoding="utf-8") as f:
+            f.write("data")
+
     def v2_runner_on_unreachable(self, result):
         self.host_unreachable[result._host.get_name()] = result
 
     def v2_runner_on_ok(self, result, *args, **kwargs):
         self.host_ok[result._host.get_name()] = result
+        self.save_json(result)
 
     def v2_runner_on_failed(self, result, *args, **kwargs):
         self.host_failed[result._host.get_name()] = result
