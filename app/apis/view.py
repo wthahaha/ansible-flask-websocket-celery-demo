@@ -44,7 +44,8 @@ class AnsibleTaskView(Resource):
         # 启动long_task后台任务，并将其放到celery中执行
         # iplist = ["192.168.204.131", "192.168.204.132", "192.168.204.133"]
         INVENTORY = current_app.config["INVENTORY_PATH"]
-        runner = Runner(resource=INVENTORY, ip_list="all",
+        ip_group = "ipv4_moniters"
+        runner = Runner(resource=INVENTORY, ip_list=ip_group,
                         ansible_vault_key='devops')
         iplist = runner.get_all_hosts()
         module_name = ansible_module_name
