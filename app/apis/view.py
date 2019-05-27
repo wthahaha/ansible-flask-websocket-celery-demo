@@ -58,7 +58,7 @@ class AnsibleTaskView(Resource):
 
         task = long_task.delay(elementid, userid, iplist=str_ip_list, url=api.url_for(
             EventView, _external=True), module_name=module_name, module_args=module_args)
-        return {}, 202
+        return jsonify({"messege": "", "code": 200})
 
 
 class EventView(Resource):
@@ -183,7 +183,7 @@ def events_message(message):
 # 接收/events命名空间的disconnect request事件的路由
 @socketio.on('disconnect request', namespace='/events')
 def disconnect_request():
-    emit('status', {'status': 'Disconnected!'})
+    emit('status', {'status': 'disconnected'})
     disconnect()
 
 # 前端websocket连接过来后，执行的第一个函数
@@ -202,7 +202,7 @@ def events_connect():
     # 将事件名为“userid”的数据（{'userid': userid}）发到前端
     emit('userid', {'userid': userid})
     # 将事件名为“status”的数据（{'status': 'Connected user', 'userid': userid}）发到前端
-    emit('status', {'status': 'Connected user', 'userid': userid})
+    emit('status', {'status': 'connected', 'userid': userid})
 
 
 @socketio.on('disconnect', namespace='/events')

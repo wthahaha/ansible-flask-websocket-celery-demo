@@ -28,14 +28,15 @@ celery = Celery(__name__, broker=Config.CELERY_BROKER_URL)
 
 def app_create(config_name):
     # config_name: development, testing, production
-    app = Flask(__name__, static_folder="../static", template_folder="../templates")
+    app = Flask(__name__, static_folder="../static",
+                template_folder="../templates")
     app.config.from_object(config[config_name])
     app.clients = {}
     config[config_name].init_app(app)
     redis.init_app(app)
-    
 
-    from app.apis.view import AnsibleTaskView, EventView, ClientView,ClientIpListView
+    from app.apis.view import AnsibleTaskView, EventView, ClientView, ClientIpListView
+    from app.apis.service_view import LoginView, UserInfoView, LogoutView
     from app.apis import api_blueprint
     from app.main import main_blueprint
 
@@ -43,16 +44,22 @@ def app_create(config_name):
     app.register_blueprint(api_blueprint)
 
     api.add_resource(AnsibleTaskView, "/api/ansible_task/",
-                     endpoint="ansible_task",strict_slashes=False)
+                     endpoint="ansible_task", strict_slashes=False)
     api.add_resource(EventView, "/api/events/",
-                     endpoint="events",strict_slashes=False)
+                     endpoint="events", strict_slashes=False)
     api.add_resource(ClientView, "/api/client/",
-                     endpoint="client",strict_slashes=False)
+                     endpoint="client", strict_slashes=False)
     api.add_resource(ClientIpListView, "/api/iplist/",
-                     endpoint="iplist",strict_slashes=False)
+                     endpoint="iplist", strict_slashes=False)
+    api.add_resource(LoginView, "/api/user/login",
+                     endpoint="login", strict_slashes=False)
+    api.add_resource(UserInfoView, "/api/user/info",
+                     endpoint="info", strict_slashes=False)
+    api.add_resource(LogoutView, "/api/user/logout",
+                     endpoint="logout", strict_slashes=False)
 
     api.init_app(app)
     socketio.init_app(app)
-    CORS(app)
+    CORS(app, supports_credentials=True)
     celery.conf.update(app.config)
     return app
