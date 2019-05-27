@@ -18,4 +18,4 @@ manager.add_command('run', socketio.run(
 
 
 if __name__ == '__main__':
-    manager.run()
+    manager.run(threaded=True)

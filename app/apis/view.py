@@ -178,7 +178,7 @@ def events_message(message):
     print("前端websocket连接过来后，执行的第二个函数")
     print(message, "接收到的message")
     # 将事件名为“status”的数据（{'status': message['status']}），发送到前端
-    emit('status', {'status': message['status']})
+    emit('status', {'status': message['status'], "userid":current_app.clients})
 
 # 接收/events命名空间的disconnect request事件的路由
 @socketio.on('disconnect request', namespace='/events')
@@ -191,6 +191,7 @@ def disconnect_request():
 @socketio.on('connect', namespace='/events')
 def events_connect():
     print("前端websocket连接过来后，执行的第一个函数")
+    del current_app.clients[session['userid']]
     urls = api.url_for(
         EventView, _external=True)
     print(urls)
