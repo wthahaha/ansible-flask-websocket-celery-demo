@@ -26,13 +26,13 @@ def long_task(self, elementid, userid, iplist, url, module_name=None, module_arg
             result = json.dumps(result)
         except SoftTimeLimitExceeded:
             host = str(host)
-            result = json.dumps({host: "task exceed time, cancel task!"})
+            result = json.dumps({"success": {},"unreachable": {},"failed":{host: "task exceed time, cancel task!"}})
         except TimeLimitExceeded:
             host = str(host)
-            result = json.dumps({host: "task exceed time, cancel task!"})
+            result = json.dumps({"success": {},"unreachable": {},"failed":{host: "task exceed time, cancel task!"}})
         except Exception as e:
             host = str(host)
-            result = json.dumps({host: "some wrong ocured, cancel task!"})
+            result = json.dumps({"success": {},"unreachable": {},"failed":{host: "task exceed time, cancel task!"}})
         try:
             next_ip = iplist[index]
         except IndexError:

@@ -5,6 +5,7 @@
 192.168.204.136
 
 
+
 [root:vars]
 ansible_ssh_user=root
 [all:vars]

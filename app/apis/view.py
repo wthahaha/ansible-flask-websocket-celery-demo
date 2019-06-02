@@ -70,7 +70,7 @@ class EventView(Resource):
         ansible_hardware_data = data["status"]
         ansible_hardware_data = json.loads(ansible_hardware_data)
         ansible_hardware_data_success = ansible_hardware_data.get(
-            "success", None)
+            "success", "")
         new_update_data_dict = {}
         if ansible_hardware_data_success:
             for host in ansible_hardware_data_success:
@@ -139,14 +139,19 @@ class EventView(Resource):
                 new_update_data_dict["ansible_all_ipv6_addresses"] = ansible_all_ipv6_addresses
 
                 redis.set("info:"+host, json.dumps(new_update_data_dict))
+                print(new_update_data_dict)
         else:
             print(ansible_hardware_data, "超时")
             new_update_data_dict = ansible_hardware_data
 
         namespace = current_app.clients.get(userid)
         if namespace and data:
-            data["status"] = new_update_data_dict
+            if new_update_data_dict.get("failed", None) or  new_update_data_dict.get("unreachable", None):
+                data["result"] = new_update_data_dict
+            else:
+                data["result"] = {"success": new_update_data_dict, "failed": {}, "unreachable": {}}
             # 要发送的data必须的是json
+            data.pop("status")
             emit('celerystatus', data,
                  broadcast=True, namespace=namespace)
             return 'ok'
@@ -191,7 +196,7 @@ def disconnect_request():
 @socketio.on('connect', namespace='/events')
 def events_connect():
     print("前端websocket连接过来后，执行的第一个函数")
-    del current_app.clients[session['userid']]
+    # del current_app.clients[session['userid']]
     urls = api.url_for(
         EventView, _external=True)
     print(urls)
