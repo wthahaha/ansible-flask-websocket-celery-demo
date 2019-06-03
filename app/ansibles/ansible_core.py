@@ -110,7 +110,6 @@ class Runner(object):
             )
 
             tqm._stdout_callback = self.callback
-            print(play)
             result = tqm.run(play)
         except Exception as e:
             logger.setLevel(logging.DEBUG)
