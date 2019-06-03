@@ -141,7 +141,6 @@ class EventView(Resource):
                 redis.set("info:"+host, json.dumps(new_update_data_dict))
                 print(new_update_data_dict)
         else:
-            print(ansible_hardware_data, "超时")
             new_update_data_dict = ansible_hardware_data
 
         namespace = current_app.clients.get(userid)

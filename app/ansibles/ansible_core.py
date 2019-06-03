@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import pdb
+import logging
 from collections import namedtuple
 from ansible.parsing.dataloader import DataLoader
 from ansible.vars.manager import VariableManager
@@ -10,6 +12,7 @@ from tempfile import NamedTemporaryFile
 from ansible.plugins.callback import CallbackBase
 from ansible.module_utils._text import to_bytes
 from ansible.parsing.vault import VaultSecret
+import multiprocessing as mp
 
 
 class Runner(object):
@@ -95,6 +98,7 @@ class Runner(object):
 
         # 运行
         tqm = None
+        logger = mp.log_to_stderr()
         try:
             tqm = TaskQueueManager(
                 inventory=self.inventory,
@@ -104,8 +108,13 @@ class Runner(object):
                 passwords=self.passwords,
                 stdout_callback='default',
             )
+
             tqm._stdout_callback = self.callback
+            print(play)
             result = tqm.run(play)
+        except Exception as e:
+            logger.setLevel(logging.DEBUG)
+
         finally:
             if tqm is not None:
                 tqm.cleanup()

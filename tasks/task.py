@@ -11,7 +11,7 @@ from app import celery
 from celery.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 
 
-@celery.task(bind=True, soft_time_limit=10)
+@celery.task(bind=True, soft_time_limit=60)
 def long_task(self, elementid, userid, iplist, url, module_name=None, module_args=None, next_ip=""):
     """Background task that runs a long function with progress reports.
     后台任务"""
@@ -26,13 +26,16 @@ def long_task(self, elementid, userid, iplist, url, module_name=None, module_arg
             result = json.dumps(result)
         except SoftTimeLimitExceeded:
             host = str(host)
-            result = json.dumps({"success": {},"unreachable": {},"failed":{host: "task exceed time, cancel task!"}})
+            result = json.dumps({"success": {}, "unreachable": {}, "failed": {
+                                host: "task exceed time, cancel task!"}})
         except TimeLimitExceeded:
             host = str(host)
-            result = json.dumps({"success": {},"unreachable": {},"failed":{host: "task exceed time, cancel task!"}})
+            result = json.dumps({"success": {}, "unreachable": {}, "failed": {
+                                host: "task exceed time, cancel task!"}})
         except Exception as e:
             host = str(host)
-            result = json.dumps({"success": {},"unreachable": {},"failed":{host: "task exceed time, cancel task!"}})
+            result = json.dumps({"success": {}, "unreachable": {}, "failed": {
+                                host: "task exceed time, cancel task!"}})
         try:
             next_ip = iplist[index]
         except IndexError:
@@ -41,4 +44,3 @@ def long_task(self, elementid, userid, iplist, url, module_name=None, module_arg
                 'status': result, 'elementid': elementid, 'userid': userid, "next_ip": next_ip}
         print(meta)
         requests.post(url, json=meta)
-        # time.sleep(1)
