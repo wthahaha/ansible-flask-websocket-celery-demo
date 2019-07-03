@@ -14,7 +14,15 @@ class Config:
     CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
     CELERY_ACCEPT_CONTENT = ['json', 'pickle', 'msgpack', 'yaml']
     CELERY_WORKER_CONCURRENCY = 10
-
+    ES_HOST=os.getenv("ES_HOST")
+    ES_PORT=os.getenv("ES_PORT")
+    ES_INDEX=os.getenv("ES_INDEX")
+    ES_KEY_PREFIX=os.getenv("ES_KEY_PREFIX")
+    UPDATE_CMDB_URL=os.getenv("UPDATE_CMDB_URL")
+    UPDATE_CMDB_EMAIL=os.getenv("UPDATE_CMDB_EMAIL")
+    UPDATE_CMDB_PASS=os.getenv("UPDATE_CMDB_PASS")
+    UPDATE_CMDB_TOKEN_API=os.getenv("UPDATE_CMDB_TOKEN_API")
+    CMDB_MODEL_API=os.getenv("CMDB_MODEL_API")
     INVENTORY_PATH = os.getenv("INVENTORY_PATH")
 
     @staticmethod

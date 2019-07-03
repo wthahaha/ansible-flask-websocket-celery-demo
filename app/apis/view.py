@@ -16,6 +16,7 @@ from app.ansibles.ansible_core import Runner
 from app import redis, socketio, api
 from tasks.task import long_task
 from app import redis
+from app.utils import get_all_device_data_from_cmdb_es, format_ansible_response_device_data
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -45,6 +46,7 @@ class AnsibleTaskView(Resource):
         # iplist = ["192.168.204.131", "192.168.204.132", "192.168.204.133"]
         INVENTORY = current_app.config["INVENTORY_PATH"]
         ip_group = "ipv4_moniters"
+        # runner的iplist参数可以使列表，也可以是inventory组名
         runner = Runner(resource=INVENTORY, ip_list=ip_group,
                         ansible_vault_key='devops')
         iplist = runner.get_all_hosts()
@@ -65,93 +67,17 @@ class EventView(Resource):
     def post(self):
         # 接收long_task后台任务返回的数据，并发送到前端celerystatus事件（可以在这里进一步加工处理后台任务返回的数据，然后再发送到前端）
         userid = request.json['userid']
-        data = request.json
-
-        ansible_hardware_data = data["status"]
-        ansible_hardware_data = json.loads(ansible_hardware_data)
-        ansible_hardware_data_success = ansible_hardware_data.get(
-            "success", "")
-        new_update_data_dict = {}
-        if ansible_hardware_data_success:
-            for host in ansible_hardware_data_success:
-                """
-                {"success": {"192.168.204.132": {"invocation": {"module_args": {"filter": "*", "gather_subset": ["hardware"],
-                 "fact_path": "/etc/ansible/facts.d", "gather_timeout": 10}}, 
-                 "ansible_facts": {"ansible_product_serial": "6CU3240C5M", "ansible_form_factor": "Rack Mount Chassis"
-                """
-                hardware_data = ansible_hardware_data_success[host]["ansible_facts"]
-                device_size_total = 0
-                ansible_devices = hardware_data['ansible_devices']
-                # 获取磁盘总大小：G
-                # print succ
-                for device in ansible_devices:
-                    if device.startswith('sd'):
-                        if "GB" in ansible_devices[device]["size"]:
-                            device_size = float(
-                                ansible_devices[device]["size"].replace("GB", ""))
-
-                        elif "TB" in ansible_devices[device]["size"]:
-                            device_size = float(
-                                ansible_devices[device]["size"].replace("TB", ""))
-                        device_size_total += device_size
-                device_size_total = format(device_size_total, ".1f")
-                # 获取内存总大小：G
-                total_memory = int(hardware_data
-                                   ['ansible_memtotal_mb'])/1024
-
-                # 获取cpu个数
-                cpu_count = int(hardware_data
-                                ["ansible_processor_count"])
-
-                # 获取操作系统名称  centos  6.5-x86_64
-                os_name = hardware_data["ansible_distribution"]
-                os_version = hardware_data["ansible_distribution_version"]
-                os_bit = hardware_data["ansible_architecture"]
-                os_version_bit = os_version + "-" + os_bit
-
-                # 是否为虚拟机， VMware 或kvm是虚拟机，由于ansible无法区分刀片和架式机，故设备类型只更新虚拟机
-                virtualization_type = hardware_data["ansible_virtualization_type"]
-                # 设备品牌
-                ansible_system_vendor = hardware_data["ansible_system_vendor"]
-                # 设备型号
-                ansible_product_name = hardware_data["ansible_product_name"]
-                # 设备序列号
-                ansible_product_serial = hardware_data["ansible_product_serial"]
-                # 主机名
-                ansible_hostname = hardware_data["ansible_nodename"]
-                # 所有的ipv4地址
-                ansible_all_ipv4_addresses = hardware_data["ansible_all_ipv4_addresses"]
-                # 所有的ipv6地址
-                ansible_all_ipv6_addresses = hardware_data["ansible_all_ipv6_addresses"]
-
-                new_update_data_dict["ip"] = host
-                new_update_data_dict["device_size_total"] = device_size_total
-                new_update_data_dict["total_memory"] = total_memory
-                new_update_data_dict["cpu_count"] = cpu_count
-                new_update_data_dict["os_name"] = os_name
-                new_update_data_dict["os_version_bit"] = os_version_bit
-                new_update_data_dict["virtualization_type"] = virtualization_type
-                new_update_data_dict["ansible_system_vendor"] = ansible_system_vendor
-                new_update_data_dict["ansible_product_name"] = ansible_product_name
-                new_update_data_dict["ansible_product_serial"] = ansible_product_serial
-                new_update_data_dict["ansible_hostname"] = ansible_hostname
-                new_update_data_dict["ansible_all_ipv4_addresses"] = ansible_all_ipv4_addresses
-                new_update_data_dict["ansible_all_ipv6_addresses"] = ansible_all_ipv6_addresses
-
-                redis.set("info:"+host, json.dumps(new_update_data_dict))
-                print(new_update_data_dict)
-        else:
-            new_update_data_dict = ansible_hardware_data
-
+        request_data = request.json
+        new_update_data_dict = format_ansible_response_device_data(request_data)
         namespace = current_app.clients.get(userid)
-        if namespace and data:
+        if namespace and request_data:
             if new_update_data_dict.get("failed", None) or  new_update_data_dict.get("unreachable", None):
-                data["result"] = new_update_data_dict
+                request_data["result"] = new_update_data_dict
             else:
-                data["result"] = {"success": new_update_data_dict, "failed": {}, "unreachable": {}}
-            # 要发送的data必须的是json
-            data.pop("status")
-            emit('celerystatus', data,
+                request_data["result"] = {"success": new_update_data_dict, "failed": {}, "unreachable": {}}
+            # 要发送的request_data必须得是json
+            request_data.pop("status")
+            emit('celerystatus', request_data,
                  broadcast=True, namespace=namespace)
             return 'ok'
         return 'error', 404

@@ -7,11 +7,12 @@ from flask_cors import CORS
 from flask_redis import FlaskRedis
 from flask_socketio import SocketIO
 from celery import Celery
+import elasticsearch
 from conf.config import config, Config
 
 api = Api()
 socketio = SocketIO()
-redis = FlaskRedis()
+redis = FlaskRedis(decode_responses=True)
 celery = Celery(__name__, broker=Config.CELERY_BROKER_URL)
 
 
@@ -37,6 +38,7 @@ def app_create(config_name):
 
     from app.apis.view import AnsibleTaskView, EventView, ClientView, ClientIpListView
     from app.apis.service_view import LoginView, UserInfoView, LogoutView
+    from app.apis.cmdb_view import UpdateCmdb
     from app.apis import api_blueprint
     from app.main import main_blueprint
 
@@ -57,6 +59,8 @@ def app_create(config_name):
                      endpoint="info", strict_slashes=False)
     api.add_resource(LogoutView, "/api/user/logout",
                      endpoint="logout", strict_slashes=False)
+    api.add_resource(UpdateCmdb, "/api/update_cmdb",
+                     endpoint="update_cmdb", strict_slashes=False)
 
     api.init_app(app)
     socketio.init_app(app)
