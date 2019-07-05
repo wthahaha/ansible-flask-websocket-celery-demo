@@ -15,8 +15,6 @@ from app.utils import get_all_device_data_from_cmdb_es, UpdateCmdbMeta
 from app.apis.view import EventView
 
 
-
-
 class UpdateCmdb(Resource):
 
     def put(self):
@@ -36,6 +34,7 @@ class UpdateCmdb(Resource):
        
         update_cmdb_meta = UpdateCmdbMeta()
         headers = update_cmdb_meta.get_headers()
+        update_cmdb_meta.get_all_os()
         ansible_module_name = "setup"
         module_args = ""
         # device_id = request.json.get("device_id", "")

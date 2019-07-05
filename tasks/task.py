@@ -33,8 +33,7 @@ def long_task(self, elementid, userid, iplist, url, module_name=None, module_arg
             result = json.dumps({"success": {}, "unreachable": {}, "failed": {
                                 host: "task exceed time, cancel task!"}})
         except Exception as e:
-            result = json.dumps({"success": {}, "unreachable": {}, "failed": {
-                                host: "task exceed time, cancel task!"}})
+            result = json.dumps({"success": {}, "unreachable": {}, "failed": {host: e}})
         try:
             next_ip = iplist[index]
         except IndexError:
@@ -56,11 +55,9 @@ def update_cmdb_task(self, iplist, headers, module_name=None, module_args=None):
             result = res.run_translate_task()
             result = json.dumps(result)
         except Exception as e:
-            result = json.dumps({"success": {}, "unreachable": {}, "failed": {
-                                host: "task exceed time, cancel task!"}})
+            result = json.dumps({"success": {}, "unreachable": {}, "failed": {host: e}})
         meta = {'host': host, 'status': result}
         format_data = utils.format_ansible_response_device_data(meta)
-        print(format_data, "TTTTTTTTT")
         device_id = format_data.get("device_id", "")
         if device_id:
             update_cmdb_url = current_app.config.get("UPDATE_CMDB_URL", "") + str(device_id)
