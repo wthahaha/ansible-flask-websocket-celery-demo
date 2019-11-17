@@ -49,6 +49,7 @@ def update_cmdb_task(self, iplist, headers, module_name=None, module_args=None):
 
     for _, host in enumerate(iplist, 1):
         host = str(host)
+        print(host, "host")
         try:
             res = AnsibleTask(host, module_name=module_name, module_args=module_args)
             current_process()._config = {'semprefix': '/mp'}
@@ -58,12 +59,13 @@ def update_cmdb_task(self, iplist, headers, module_name=None, module_args=None):
             result = json.dumps({"success": {}, "unreachable": {}, "failed": {host: e}})
         meta = {'host': host, 'status': result}
         format_data = utils.format_ansible_response_device_data(meta)
+        print(format_data)
         device_id = format_data.get("device_id", "")
         if device_id:
             update_cmdb_url = current_app.config.get("UPDATE_CMDB_URL", "") + str(device_id)
             try:
                 res = requests.put(update_cmdb_url, json=format_data, headers=headers)
-                print(res.json())
+                print(res.json(), "from cmdb")
             except Exception as e:
                 print(e)
 

@@ -3,6 +3,7 @@
 import json
 from app import redis
 import elasticsearch
+from elasticsearch import helpers
 import requests
 from flask import current_app
 
@@ -26,11 +27,18 @@ def get_all_device_data_from_cmdb_es(serial_number=None, nic_id=None, es_index="
             qbody = {"query": {"match": {"serial_number": serial_number}}}
         if nic_id:
             qbody = {"query": {"match": {"nic_id": nic_id}}}
-        res = es.search(
-            index=es_index, doc_type="all", body=json.dumps(qbody)
+
+        res = helpers.scan(
+            client=es,
+            query=qbody,
+            scroll="5m",
+            index=es_index,
+            doc_type="all",
+            timeout="1m"
         )
         return res
     except Exception as e:
+        print(e)
         return []
 
     
@@ -40,12 +48,6 @@ class UpdateCmdbMeta(object):
         self.passwd = current_app.config.get("UPDATE_CMDB_PASS", "")
         self.cmdb_token_api = current_app.config.get("UPDATE_CMDB_TOKEN_API", "")
         self.update_cmdb_os_url = current_app.config.get("UPDATE_CMDB_OS_API", "")
-        print(self.cmdb_token_api, self.update_cmdb_os_url)
-        self.headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json, text/javascript, */*; q=0.01",
-            "Authorization": self.get_token(), 
-        }
 
     def get_headers(self):
         return {
@@ -55,7 +57,7 @@ class UpdateCmdbMeta(object):
         }
 
     def get_all_item(self, api_url):
-        response_data = requests.get(api_url, headers=self.headers)
+        response_data = requests.get(api_url, headers=self.get_headers())
         data_list = response_data.json()["data"]
         return data_list
 
@@ -68,10 +70,10 @@ class UpdateCmdbMeta(object):
         """
         从es获取所有操作系统
         """
-        os_data_from_es = get_all_device_data_from_cmdb_es(es_index="cmdb_os")
-        return os_data_from_es["hits"]["hits"]
+        os_data_from_es = list(get_all_device_data_from_cmdb_es(es_index="cmdb_os"))
+        return os_data_from_es
 
-    def get_os_id(self, os_name="", os_version=""):
+    def get_os_id(self, os_name="", os_version_bit=""):
         """
         从es获取操作系统id
         """
@@ -79,20 +81,40 @@ class UpdateCmdbMeta(object):
         os_id = ""
         if os_data_list:
             for data in os_data_list:
-                if data["_source"].get("os_name", "") == os_name and data["_source"].get("os_version", "") == os_version:
+                if data["_source"].get("os_name", "") == os_name and data["_source"].get("os_version", "") == os_version_bit:
                     os_id = data["_source"].get("id", "")
-                    print("LLLLLLLLLLLLLLLLLLLL")
                     return os_id
             try:
-                os_msg_dict = {"os_name": os_name, "os_version": os_version}
+                # cmdb接口字段名为os_version
+                os_msg_dict = {"os_name": os_name, "os_version": os_version_bit}
                 response_data = requests.post(self.update_cmdb_os_url, data=os_msg_dict, headers=self.get_headers())
-                print(response_data, "LLLLLLLLLLLLLLLLLLLL")
                 return_data = response_data.json()["data"]
                 result = str(return_data["Location"])
                 os_id = result.split('/')[6]
             except Exception as e:
-                print(e, "PPPPPPPPPP")
-        print(os_id,"OOOOOOOOO")
+                print(e)
+        return os_id
+
+    def get_ip_id(self, ip=""):
+        """
+        从cmdb获取操作系统id
+        """
+        ip_id = -1
+        res = requests.get()
+        if os_data_list:
+            for data in os_data_list:
+                if data["_source"].get("os_name", "") == os_name and data["_source"].get("os_version", "") == os_version_bit:
+                    os_id = data["_source"].get("id", "")
+                    return os_id
+            try:
+                # cmdb接口字段名为os_version
+                os_msg_dict = {"os_name": os_name, "os_version": os_version_bit}
+                response_data = requests.post(self.update_cmdb_os_url, data=os_msg_dict, headers=self.get_headers())
+                return_data = response_data.json()["data"]
+                result = str(return_data["Location"])
+                os_id = result.split('/')[6]
+            except Exception as e:
+                print(e)
         return os_id
 
 def format_ansible_response_device_data(device_data):
@@ -129,7 +151,6 @@ def format_ansible_response_device_data(device_data):
             os_version = hardware_data["ansible_distribution_version"]
             os_bit = hardware_data["ansible_architecture"]
             os_version_bit = os_version + "-" + os_bit
-
             # 是否为虚拟机， VMware 或kvm是虚拟机，由于ansible无法区分刀片和架式机，故设备类型只更新虚拟机
             virtualization_type = hardware_data["ansible_virtualization_type"]
             # 设备品牌
@@ -144,17 +165,20 @@ def format_ansible_response_device_data(device_data):
             ansible_all_ipv4_addresses = hardware_data["ansible_all_ipv4_addresses"]
             # 所有的ipv6地址
             ansible_all_ipv6_addresses = hardware_data["ansible_all_ipv6_addresses"]
+            # 获取os_id
             if os_name and os_version_bit:
                 update_cmdb_meta = UpdateCmdbMeta()
-                os_id = update_cmdb_meta.get_os_id(os_name, os_version)
-                print(os_id)
+                os_id = update_cmdb_meta.get_os_id(os_name, os_version_bit)
+            # 获取ip地址id
+
 
             new_update_data_dict["ip"] = host
             new_update_data_dict["disk_size"] = int(float(device_size_total)+0.5)
             new_update_data_dict["memory_size"] = int(float(total_memory)+0.5)
             new_update_data_dict["cpu_number"] = cpu_count
             new_update_data_dict["os_name"] = os_name
-            new_update_data_dict["os_version_bit"] = os_version_bit
+            new_update_data_dict["os_version"] = os_version_bit
+            new_update_data_dict["os_id"] = os_id
             new_update_data_dict["virtualization_type"] = virtualization_type
             new_update_data_dict["ansible_system_vendor"] = ansible_system_vendor
             new_update_data_dict["ansible_product_name"] = ansible_product_name
@@ -162,19 +186,17 @@ def format_ansible_response_device_data(device_data):
             new_update_data_dict["ansible_hostname"] = ansible_hostname
             new_update_data_dict["ansible_all_ipv4_addresses"] = ansible_all_ipv4_addresses
             new_update_data_dict["ansible_all_ipv6_addresses"] = ansible_all_ipv6_addresses
-            device_data_from_es = get_all_device_data_from_cmdb_es(serial_number=ansible_product_serial, es_index="devices")
-            print(device_data_from_es)
+            device_data_from_es = list(get_all_device_data_from_cmdb_es(serial_number=ansible_product_serial, es_index="devices"))
             
-            if device_data_from_es["hits"]["hits"]:
-                device_data_from_es = device_data_from_es["hits"]["hits"][0]["_source"]
-                if device_data_from_es:
-                    new_update_data_dict["device_id"] = device_data_from_es["id"]
-                    redis.set("zeus_cmdb_device_info:%s"%(device_data_from_es["id"]), json.dumps(new_update_data_dict))
+            # 将硬件数据存到redis
+            if device_data_from_es:
+                device_data_from_es_item = device_data_from_es[0]["_source"]
+                if device_data_from_es_item:
+                    new_update_data_dict["device_id"] = device_data_from_es_item["id"]
+                    redis.set("zeus_cmdb_device_info:%s"%(device_data_from_es_item["id"]), json.dumps(new_update_data_dict))
                 else:
                     # 如果设备序列号无法在es中查到，说明cmdb没有录入该设备，需要提示设备管理员
                     pass
     else:
         new_update_data_dict = ansible_hardware_data
     return new_update_data_dict
-
-

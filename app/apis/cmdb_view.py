@@ -34,7 +34,7 @@ class UpdateCmdb(Resource):
        
         update_cmdb_meta = UpdateCmdbMeta()
         headers = update_cmdb_meta.get_headers()
-        update_cmdb_meta.get_all_os()
+        # update_cmdb_meta.get_all_os()
         ansible_module_name = "setup"
         module_args = ""
         # device_id = request.json.get("device_id", "")
@@ -53,5 +53,6 @@ class UpdateCmdb(Resource):
         else:
             iplist = runner.get_all_hosts()
             str_ip_list = [str(ip) for ip in iplist]
+            print(str_ip_list)
         update_cmdb_task.delay(iplist=str_ip_list, headers=headers, module_name=ansible_module_name, module_args=module_args)
         return jsonify({"messege": "update success", "code": 200})
