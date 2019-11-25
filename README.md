@@ -28,7 +28,7 @@ Here is a screenshot of this application:
    REDIS_URL=redis://127.0.0.1:6379/0
    ```
 5. 启动 Celery worker: `celery worker -A celery_worker.celery --loglevel=info`.
-6. 启动 app: `venv/bin/python app.py`.
+6. 启动 app: `venv/bin/python manage.py runserver`.
 7. 浏览器访问 `http://localhost:5000/`
 8. 演示：
    <center><img src="https://github.com/cncert/ansible-flask-websocket-celery-demo/blob/master/templates/1556374302219.gif"></center>
