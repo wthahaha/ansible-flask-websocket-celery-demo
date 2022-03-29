@@ -39,7 +39,7 @@ Mako==1.0.9
 MarkupSafe==0.23
 mccabe==0.6.1
 monotonic==1.5
-paramiko==2.4.2
+paramiko==2.10.1
 pyasn1==0.4.5
 pycodestyle==2.5.0
 pycparser==2.19
